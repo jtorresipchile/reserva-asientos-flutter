@@ -1,34 +1,19 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
-// MODELO DE DATOS
 class Asiento {
   final int numero;
-  bool estaOcupado;
   bool estaSeleccionado;
-
-  Asiento({
-    required this.numero,
-    this.estaOcupado = false,
-    this.estaSeleccionado = false,
-  });
+  Asiento({required this.numero, this.estaSeleccionado = false});
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Reserva BHDP',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
       home: const PantallaBus(),
     );
   }
@@ -36,63 +21,66 @@ class MyApp extends StatelessWidget {
 
 class PantallaBus extends StatefulWidget {
   const PantallaBus({super.key});
-
   @override
   State<PantallaBus> createState() => _PantallaBusState();
 }
 
 class _PantallaBusState extends State<PantallaBus> {
-  // GENERACIÓN DE LOS 44 ASIENTOS
+  // Creamos la lista de 44 asientos exactos
   final List<Asiento> misAsientos = List.generate(
     44,
-    (index) => Asiento(numero: index + 1),
+    (i) => Asiento(numero: i + 1),
   );
 
-  // AQUÍ VA EL BLOQUE QUE ME PREGUNTASTE
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Distribución Bus BHDP"),
-        centerTitle: true,
+        title: const Text("Bus BHDP - 44 Asientos Reales"),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
       ),
       body: GridView.builder(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5, // 2 izq + 1 pasillo + 2 der
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
+          crossAxisCount: 5, // 2 + pasillo + 2
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
         ),
         itemCount: 55, // 11 filas x 5 columnas
         itemBuilder: (context, index) {
-          // Lógica del Pasillo (Columna central)
-          if (index % 5 == 2) {
-            return const SizedBox();
-          }
+          // 1. Detectar el pasillo (Columna central)
+          if (index % 5 == 2) return const SizedBox();
 
-          // Cálculo del índice real del asiento
-          int asientoIndex = index - (index ~/ 5);
+          // 2. NUEVA LÓGICA DE CONTEO:
+          // Calculamos cuántos huecos de pasillo han pasado exactamente
+          int filaActual = index ~/ 5;
+          int posicionEnFila = index % 5;
 
-          if (asientoIndex >= 44) return const SizedBox();
+          // Si estamos en las columnas 0 o 1, restamos los pasillos de las filas anteriores
+          // Si estamos en las columnas 3 o 4, restamos los pasillos de las filas anteriores Y el de la fila actual
+          int restaPasillo = (posicionEnFila > 2)
+              ? (filaActual + 1)
+              : filaActual;
 
-          final asiento = misAsientos[asientoIndex];
+          int realIdx = index - restaPasillo;
+
+          // Evitar que el conteo se pase de 44
+          if (realIdx < 0 || realIdx >= 44) return const SizedBox();
+
+          final asiento = misAsientos[realIdx];
 
           return GestureDetector(
-            onTap: () {
-              // setState le avisa a Flutter que debe repintar el color
-              setState(() {
-                asiento.estaSeleccionado = !asiento.estaSeleccionado;
-              });
-            },
+            onTap: () => setState(
+              () => asiento.estaSeleccionado = !asiento.estaSeleccionado,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: asiento.estaSeleccionado
                     ? Colors.green
                     : Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Colors.black26),
               ),
               child: Center(
                 child: Text(
